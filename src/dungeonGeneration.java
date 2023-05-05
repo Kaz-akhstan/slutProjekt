@@ -13,9 +13,12 @@ public class dungeonGeneration {
         MAP.add(new Vector2(X, Y));
         for (int i = 0; i < STEPS; i++) {
             Random random_ = new Random();
-            switch (random_.nextInt(5)) {
+            switch (random_.nextInt(4)) {
                 case 0: //UP
-                    Y--;
+                    if(Y > 0)
+                    {
+                        Y--;
+                    }
                     break;
                 case 1: //RIGHT
                     X++;
@@ -24,11 +27,15 @@ public class dungeonGeneration {
                     Y++;
                     break;
                 case 3: //LEFT
-                    X--;
+                    if(X > 0)
+                    {
+                        X--;
+                    }
                     break;
             }
-            if(!MAP.contains(new Vector2(X, Y))) {
-                MAP.add(new Vector2(X, Y));
+            Vector2 v = new Vector2(X, Y);
+            if(!MAP.contains(v)) {
+                MAP.add(v);
             }
         }
     }
@@ -42,7 +49,20 @@ public class dungeonGeneration {
     }
 
     public static void main(String[] args) {
-        dungeonGeneration d = new dungeonGeneration(20);
+        dungeonGeneration d = new dungeonGeneration(60);
         d.createDungeon();
+
+        for (int y = 0; y < 10; y++) {
+            String s = "";
+            for (int x = 0; x < 20; x++) {
+                if(d.getDungeon().contains(new Vector2(x, y))) {
+                    s += ".";
+                }
+                else {
+                    s += "#";
+                }
+            }
+            System.out.println(s);
+        }
     }
 }
