@@ -1,11 +1,14 @@
+import org.w3c.dom.css.Rect;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * Enkel grafik. Skapa en Canvas men skriv en egen metod för att anropa ritandet. För att kunna styra fps och ups
@@ -27,22 +30,47 @@ public class graphics extends Canvas implements Runnable {
     // Skapa en buffrad grafik så att vi kan rita bilder i förväg, bättre än dbg från tidigare
     private BufferStrategy bs;
     // Storleken på bilden
-    private final int height = 600;
-    private final int width = 800;
+    private int height = 20;
+    private int width = 30;
     // Variabler gör det lättare att placera saker
-    int x = 400;
-    int y = 300;
-    int vx = 1;
-    int vy = 1;
+
+    boolean movingLeft, movingRight, movingUp, movingDown;
+
+    player p;
+
+    int spriteSize = 16;
+    int spriteScale = 2;
 
     private BufferedImage spriteimg;
+    private BufferedImage wall;
+
+    int[][] map;
+    ArrayList<Rectangle>walls = new ArrayList<>();
 
     /**
      * Skapa ett fönster och lägg in grafiken i det.
      */
     public graphics() {
+        spriteSize = spriteScale * spriteSize;
+        try {
+            spriteimg = ImageIO.read(getClass().getResource("knight_m_idle_anim_f0.png"));
+            wall = ImageIO.read(getClass().getResource("wall_mid.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        map = new int[width][height];
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                if(y == 0 || y == height-1 || x == 0 || x == width-1) {
+                    walls.add(new Rectangle(x*spriteSize, y*spriteSize, spriteScale*wall.getWidth(), spriteScale*wall.getHeight()));
+                }
+            }
+        }
+
+        p = new player(32, 32, 5, 1);
+
         JFrame frame = new JFrame("Titel");
-        this.setSize(width, height);
+        this.setSize(width*spriteSize, height*spriteSize);
         frame.add(this);
         frame.pack();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -53,15 +81,8 @@ public class graphics extends Canvas implements Runnable {
 
         // Lägg till en keylistener
         this.addKeyListener(new KL());
-        this.addMouseListener(new ML());
-        this.addMouseMotionListener(new MML());
         this.requestFocus();
         // Läs in en bild
-        try {
-            spriteimg = ImageIO.read(new File("filename.png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public synchronized void start() {
@@ -108,7 +129,7 @@ public class graphics extends Canvas implements Runnable {
 
         // Om vi inte suddar allt ritar vi över det som redan fanns. Ibland kan det vara bättre att bara sudda en bit
         g.setColor(Color.WHITE);
-        g.fillRect(0, 0, width, height);
+        g.fillRect(0, 0, width*spriteSize, height*spriteSize);
         draw(g);
         // Det här byter skärm
         g.dispose();
@@ -119,12 +140,18 @@ public class graphics extends Canvas implements Runnable {
      * Ändra värdet på de variabler som styr animationerna
      */
     private void update() {
-        x+=vx;
-        y+=vy;
-        if (x <= 0 || x >= width - 4 * spriteimg.getWidth())
-            vx = -vx;
-        if (y <= 0 || y >= height - 4 * spriteimg.getHeight())
-            vy = -vy;
+        if(movingLeft) {
+            p.x-= p.speed;
+        }
+        if(movingRight) {
+            p.x+= p.speed;
+        }
+        if(movingUp) {
+            p.y-= p.speed;
+        }
+        if(movingDown) {
+            p.y+= p.speed;
+        }
     }
 
     /**
@@ -133,78 +160,56 @@ public class graphics extends Canvas implements Runnable {
      * @param g grafiken
      */
     private void draw(Graphics g) {
-        g.drawImage(spriteimg, x, y, 4*spriteimg.getWidth(), 4* spriteimg.getHeight(),null);
+        drawPlayer(g);
+        drawWalls(g);
     }
 
-    /**
-     * Nu kan vi starta vårt program
-     * Skapa först en JFrame och en canvas, starta sedan tråden som sköter animationen.
-     */
-    public static void main(String[] args) {
-        graphics exempel = new graphics();
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                exempel.setVisible(true);
-            }
-        });
-        exempel.start();
+    private void drawWalls(Graphics g) {
+        for (int i = 0; i < walls.size(); i++) {
+            g.drawImage(wall, walls.get(i).x, walls.get(i).y, spriteScale*wall.getWidth(), spriteScale*wall.getHeight(), null);
+        }
+    }
+
+    private void drawPlayer(Graphics g) {
+        g.drawImage(spriteimg, p.x, p.y, spriteScale*spriteimg.getWidth(), spriteScale*spriteimg.getHeight(),null);
     }
 
     private class KL implements KeyListener {
         @Override
         public void keyTyped(KeyEvent keyEvent) {
-            if (keyEvent.getKeyChar() == 'a') {
-                System.out.print("a");
-            }
+
         }
 
         @Override
         public void keyPressed(KeyEvent keyEvent) {
-
+            if(keyEvent.getKeyChar() == 'a') {
+                movingLeft = true;
+            }
+            if(keyEvent.getKeyChar() == 'd') {
+                movingRight = true;
+            }
+            if(keyEvent.getKeyChar() == 'w') {
+                movingUp = true;
+            }
+            if(keyEvent.getKeyChar() == 's') {
+                movingDown = true;
+            }
         }
 
         @Override
         public void keyReleased(KeyEvent keyEvent) {
-
-        }
-    }
-
-    private class ML implements MouseListener {
-        @Override
-        public void mouseClicked(MouseEvent mouseEvent) {
-            System.out.println("Click!");
-        }
-
-        @Override
-        public void mousePressed(MouseEvent mouseEvent) {
-
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent mouseEvent) {
-
-        }
-
-        @Override
-        public void mouseEntered(MouseEvent mouseEvent) {
-
-        }
-
-        @Override
-        public void mouseExited(MouseEvent mouseEvent) {
-
-        }
-    }
-
-    private class MML implements MouseMotionListener {
-        @Override
-        public void mouseDragged(MouseEvent mouseEvent) {
-
-        }
-
-        @Override
-        public void mouseMoved(MouseEvent mouseEvent) {
-            System.out.println("Mouse: " + mouseEvent.getX() + " , " + mouseEvent.getY());
+            if(keyEvent.getKeyChar() == 'a') {
+                movingLeft = false;
+            }
+            if(keyEvent.getKeyChar() == 'd') {
+                movingRight = false;
+            }
+            if(keyEvent.getKeyChar() == 'w') {
+                movingUp = false;
+            }
+            if(keyEvent.getKeyChar() == 's') {
+                movingDown = false;
+            }
         }
     }
 }
