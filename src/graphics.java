@@ -9,6 +9,7 @@ import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * Enkel grafik. Skapa en Canvas men skriv en egen metod för att anropa ritandet. För att kunna styra fps och ups
@@ -35,7 +36,7 @@ public class graphics extends Canvas implements Runnable {
     // Variabler gör det lättare att placera saker
 
     boolean movingLeft, movingRight, movingUp, movingDown;
-    boolean attackingLeft, attackingRight, attackingUp, attackingDown;
+    boolean isAttacking;
 
     player p;
     Rectangle PLAYER;
@@ -43,13 +44,17 @@ public class graphics extends Canvas implements Runnable {
     int spriteSize = 16;
     int spriteScale = 2;
 
+    int spawnTimer = 0;
+    int spawnCooldown = 100;
+
     private BufferedImage spriteimg;
     private BufferedImage wall;
 
     int[][] map;
-    ArrayList<Rectangle>walls = new ArrayList<>();
 
+    ArrayList<Rectangle>walls = new ArrayList<>();
     ArrayList<projectile>projectiles = new ArrayList<>();
+    ArrayList<skeleton>skeletons = new ArrayList<>();
 
     /**
      * Skapa ett fönster och lägg in grafiken i det.
@@ -168,10 +173,25 @@ public class graphics extends Canvas implements Runnable {
                     projectiles.get(i).y += projectiles.get(i).speed;
                     break;
             }
+            if(isCollidingWithWall(new Rectangle(projectiles.get(i).x, projectiles.get(i).y, spriteSize, spriteSize), 0, 0)) {
+                projectiles.remove(i);
+            }
         }
     }
 
+    private void spawnEnemy() {
+        Random rn = new Random();
+        int x = rn.nextInt(width*spriteSize-(spriteSize*2));
+        int y = rn.nextInt(height*spriteSize-(spriteSize*2));
+        skeletons.add(new skeleton(x, y, 4, 1));
+    }
+
     private void update() {
+        spawnTimer++;
+        if(spawnTimer >= spawnCooldown) {
+            spawnEnemy();
+            spawnTimer = 0;
+        }
         updateProjectiles();
         if(movingLeft && !isCollidingWithWall(PLAYER, -p.speed, 0)) {
             PLAYER.x-= p.speed;
@@ -196,8 +216,16 @@ public class graphics extends Canvas implements Runnable {
      */
     private void draw(Graphics g) {
         drawPlayer(g);
+        drawSkeletons(g);
         drawProjectiles(g);
         drawWalls(g);
+    }
+
+    private void drawSkeletons(Graphics g) {
+        for (int i = 0; i < skeletons.size(); i++) {
+            g.setColor(Color.cyan);
+            g.drawRect(skeletons.get(i).x, skeletons.get(i).y, spriteSize, spriteSize);
+        }
     }
 
     private void drawProjectiles(Graphics g) {
@@ -237,16 +265,16 @@ public class graphics extends Canvas implements Runnable {
             if(keyEvent.getKeyChar() == 's') {
                 movingDown = true;
             }
-            if(keyEvent.getKeyCode() == keyEvent.VK_LEFT) {
+            if(keyEvent.getKeyCode() == keyEvent.VK_LEFT && !isAttacking) {
                 playerAttack(-spriteSize, 0);
             }
-            if(keyEvent.getKeyCode() == keyEvent.VK_RIGHT) {
+            if(keyEvent.getKeyCode() == keyEvent.VK_RIGHT && !isAttacking) {
                 playerAttack(spriteSize, 0);
             }
-            if(keyEvent.getKeyCode() == keyEvent.VK_UP) {
+            if(keyEvent.getKeyCode() == keyEvent.VK_UP && !isAttacking) {
                 playerAttack(0, -spriteSize);
             }
-            if(keyEvent.getKeyCode() == keyEvent.VK_DOWN) {
+            if(keyEvent.getKeyCode() == keyEvent.VK_DOWN && !isAttacking) {
                 playerAttack(0, spriteSize);
             }
         }
@@ -265,9 +293,22 @@ public class graphics extends Canvas implements Runnable {
             if(keyEvent.getKeyChar() == 's') {
                 movingDown = false;
             }
+            if(keyEvent.getKeyCode() == keyEvent.VK_LEFT) {
+                isAttacking = false;
+            }
+            if(keyEvent.getKeyCode() == keyEvent.VK_RIGHT) {
+                isAttacking = false;
+            }
+            if(keyEvent.getKeyCode() == keyEvent.VK_UP) {
+                isAttacking = false;
+            }
+            if(keyEvent.getKeyCode() == keyEvent.VK_DOWN) {
+                isAttacking = false;
+            }
         }
     }
     private void playerAttack(int xOffset, int yOffset) {
+        isAttacking = true;
         if(xOffset < 0) {
             projectiles.add(new projectile(PLAYER.x + xOffset, PLAYER.y + yOffset, "Left"));
         }
