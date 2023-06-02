@@ -37,6 +37,7 @@ public class graphics extends Canvas implements Runnable {
     boolean movingLeft, movingRight, movingUp, movingDown;
 
     player p;
+    Rectangle PLAYER;
 
     int spriteSize = 16;
     int spriteScale = 2;
@@ -66,8 +67,8 @@ public class graphics extends Canvas implements Runnable {
                 }
             }
         }
-
         p = new player(32, 32, 5, 1);
+        PLAYER = new Rectangle(p.x, p.y, spriteimg.getWidth()*spriteScale, spriteimg.getHeight()*spriteScale);
 
         JFrame frame = new JFrame("Titel");
         this.setSize(width*spriteSize, height*spriteSize);
@@ -136,21 +137,27 @@ public class graphics extends Canvas implements Runnable {
         bs.show();
     }
 
-    /**
-     * Ändra värdet på de variabler som styr animationerna
-     */
+    private boolean isCollidingWithWall (Rectangle actor, int xOffset, int yOffset) {
+        for (Rectangle wall : walls) {
+            if (new Rectangle(actor.x + xOffset, actor.y + yOffset, actor.width, actor.height).intersects(wall)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void update() {
-        if(movingLeft) {
-            p.x-= p.speed;
+        if(movingLeft && !isCollidingWithWall(PLAYER, -p.speed, 0)) {
+            PLAYER.x-= p.speed;
         }
-        if(movingRight) {
-            p.x+= p.speed;
+        else if(movingRight && !isCollidingWithWall(PLAYER, p.speed, 0)) {
+            PLAYER.x+= p.speed;
         }
-        if(movingUp) {
-            p.y-= p.speed;
+        else if(movingUp && !isCollidingWithWall(PLAYER, 0, -p.speed)) {
+            PLAYER.y-= p.speed;
         }
-        if(movingDown) {
-            p.y+= p.speed;
+        else if(movingDown && !isCollidingWithWall(PLAYER, 0, p.speed)) {
+            PLAYER.y+= p.speed;
         }
     }
 
@@ -171,7 +178,7 @@ public class graphics extends Canvas implements Runnable {
     }
 
     private void drawPlayer(Graphics g) {
-        g.drawImage(spriteimg, p.x, p.y, spriteScale*spriteimg.getWidth(), spriteScale*spriteimg.getHeight(),null);
+        g.drawImage(spriteimg, PLAYER.x, PLAYER.y, PLAYER.width, PLAYER.height,null);
     }
 
     private class KL implements KeyListener {

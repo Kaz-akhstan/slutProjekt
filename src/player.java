@@ -3,7 +3,7 @@ public class player {
     int y;
     int hp;
     int dmg;
-    int speed = 3;
+    int speed = 5;
 
     public int getHp() {
         return hp;
