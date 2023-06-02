@@ -35,6 +35,7 @@ public class graphics extends Canvas implements Runnable {
     // Variabler gör det lättare att placera saker
 
     boolean movingLeft, movingRight, movingUp, movingDown;
+    boolean attackingLeft, attackingRight, attackingUp, attackingDown;
 
     player p;
     Rectangle PLAYER;
@@ -47,6 +48,8 @@ public class graphics extends Canvas implements Runnable {
 
     int[][] map;
     ArrayList<Rectangle>walls = new ArrayList<>();
+
+    ArrayList<projectile>projectiles = new ArrayList<>();
 
     /**
      * Skapa ett fönster och lägg in grafiken i det.
@@ -146,7 +149,30 @@ public class graphics extends Canvas implements Runnable {
         return false;
     }
 
+    private void updateProjectiles() {
+        for (int i = 0; i < projectiles.size(); i++) {
+            switch (projectiles.get(i).direction) {
+                case "Left":
+                    projectiles.get(i).x -= projectiles.get(i).speed;
+                    break;
+
+                case "Right":
+                    projectiles.get(i).x += projectiles.get(i).speed;
+                    break;
+
+                case "Up":
+                    projectiles.get(i).y -= projectiles.get(i).speed;
+                    break;
+
+                case "Down":
+                    projectiles.get(i).y += projectiles.get(i).speed;
+                    break;
+            }
+        }
+    }
+
     private void update() {
+        updateProjectiles();
         if(movingLeft && !isCollidingWithWall(PLAYER, -p.speed, 0)) {
             PLAYER.x-= p.speed;
         }
@@ -159,6 +185,8 @@ public class graphics extends Canvas implements Runnable {
         else if(movingDown && !isCollidingWithWall(PLAYER, 0, p.speed)) {
             PLAYER.y+= p.speed;
         }
+        p.x = PLAYER.x;
+        p.y = PLAYER.y;
     }
 
     /**
@@ -168,7 +196,15 @@ public class graphics extends Canvas implements Runnable {
      */
     private void draw(Graphics g) {
         drawPlayer(g);
+        drawProjectiles(g);
         drawWalls(g);
+    }
+
+    private void drawProjectiles(Graphics g) {
+        for (int i = 0; i < projectiles.size(); i++) {
+            g.setColor(Color.BLUE);
+            g.drawRect(projectiles.get(i).x, projectiles.get(i).y, spriteSize, spriteSize);
+        }
     }
 
     private void drawWalls(Graphics g) {
@@ -201,6 +237,18 @@ public class graphics extends Canvas implements Runnable {
             if(keyEvent.getKeyChar() == 's') {
                 movingDown = true;
             }
+            if(keyEvent.getKeyCode() == keyEvent.VK_LEFT) {
+                playerAttack(-spriteSize, 0);
+            }
+            if(keyEvent.getKeyCode() == keyEvent.VK_RIGHT) {
+                playerAttack(spriteSize, 0);
+            }
+            if(keyEvent.getKeyCode() == keyEvent.VK_UP) {
+                playerAttack(0, -spriteSize);
+            }
+            if(keyEvent.getKeyCode() == keyEvent.VK_DOWN) {
+                playerAttack(0, spriteSize);
+            }
         }
 
         @Override
@@ -217,6 +265,20 @@ public class graphics extends Canvas implements Runnable {
             if(keyEvent.getKeyChar() == 's') {
                 movingDown = false;
             }
+        }
+    }
+    private void playerAttack(int xOffset, int yOffset) {
+        if(xOffset < 0) {
+            projectiles.add(new projectile(PLAYER.x + xOffset, PLAYER.y + yOffset, "Left"));
+        }
+        else if (xOffset > 0) {
+            projectiles.add(new projectile(PLAYER.x + xOffset, PLAYER.y + yOffset, "Right"));
+        }
+        if(yOffset < 0) {
+            projectiles.add(new projectile(PLAYER.x + xOffset, PLAYER.y + yOffset, "Up"));
+        }
+        else if (yOffset > 0) {
+            projectiles.add(new projectile(PLAYER.x + xOffset, PLAYER.y + yOffset, "Down"));
         }
     }
 }
