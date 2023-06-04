@@ -1,7 +1,7 @@
 public class projectile {
     int x, y;
     String direction;
-    int speed = 7;
+    int speed = 8;
     public projectile(int x, int y, String direction) {
         this.x = x;
         this.y = y;

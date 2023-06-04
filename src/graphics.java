@@ -49,6 +49,9 @@ public class graphics extends Canvas implements Runnable {
 
     private BufferedImage spriteimg;
     private BufferedImage wall;
+    private BufferedImage mapImage;
+    private BufferedImage skeletonSprite;
+    private BufferedImage arrowSprite;
 
     int[][] map;
 
@@ -62,19 +65,22 @@ public class graphics extends Canvas implements Runnable {
     public graphics() {
         spriteSize = spriteScale * spriteSize;
         try {
-            spriteimg = ImageIO.read(getClass().getResource("knight_m_idle_anim_f0.png"));
+            spriteimg = ImageIO.read(getClass().getResource("player.png"));
             wall = ImageIO.read(getClass().getResource("wall_mid.png"));
+            mapImage = ImageIO.read(getClass().getResource("test_map.png"));
+            skeletonSprite = ImageIO.read(getClass().getResource("skeleton.png"));
+            arrowSprite = ImageIO.read(getClass().getResource("arrow.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        map = new int[width][height];
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                if(y == 0 || y == height-1 || x == 0 || x == width-1) {
+                if(new Color(mapImage.getRGB(x, y)).equals(Color.black)) {
                     walls.add(new Rectangle(x*spriteSize, y*spriteSize, spriteScale*wall.getWidth(), spriteScale*wall.getHeight()));
                 }
             }
         }
+        map = new int[width][height];
         p = new player(32, 32, 5, 1);
         PLAYER = new Rectangle(p.x, p.y, spriteimg.getWidth()*spriteScale, spriteimg.getHeight()*spriteScale);
 
@@ -173,7 +179,7 @@ public class graphics extends Canvas implements Runnable {
                     projectiles.get(i).y += projectiles.get(i).speed;
                     break;
             }
-            if(isCollidingWithWall(new Rectangle(projectiles.get(i).x, projectiles.get(i).y, spriteSize, spriteSize), 0, 0)) {
+            if(isCollidingWithWall(new Rectangle(projectiles.get(i).x, projectiles.get(i).y, arrowSprite.getWidth(), arrowSprite.getHeight()), 0, 0)) {
                 projectiles.remove(i);
             }
         }
@@ -181,9 +187,11 @@ public class graphics extends Canvas implements Runnable {
 
     private void spawnEnemy() {
         Random rn = new Random();
-        int x = rn.nextInt(width*spriteSize-(spriteSize*2));
-        int y = rn.nextInt(height*spriteSize-(spriteSize*2));
-        skeletons.add(new skeleton(x, y, 4, 1));
+        int x = rn.nextInt(width*spriteSize);
+        int y = rn.nextInt(height*spriteSize);
+        if(!isCollidingWithWall(new Rectangle(x, y, spriteSize, spriteSize), 0, 0)) {
+            skeletons.add(new skeleton(x, y, 4, 1));
+        }
     }
 
     private void update() {
@@ -225,13 +233,30 @@ public class graphics extends Canvas implements Runnable {
         for (int i = 0; i < skeletons.size(); i++) {
             g.setColor(Color.cyan);
             g.drawRect(skeletons.get(i).x, skeletons.get(i).y, spriteSize, spriteSize);
+            g.drawImage(skeletonSprite, skeletons.get(i).x, skeletons.get(i).y, skeletonSprite.getWidth()*spriteScale, skeletonSprite.getHeight()*spriteScale, null);
         }
     }
 
     private void drawProjectiles(Graphics g) {
         for (int i = 0; i < projectiles.size(); i++) {
-            g.setColor(Color.BLUE);
-            g.drawRect(projectiles.get(i).x, projectiles.get(i).y, spriteSize, spriteSize);
+            BufferedImage b;
+            switch (projectiles.get(i).direction) {
+                case "Up":
+                    b = rotate(arrowSprite, 270);
+                    g.drawImage(b, projectiles.get(i).x, projectiles.get(i).y, b.getWidth()*spriteScale, b.getHeight()*spriteScale, null);
+                    break;
+                case "Right":
+                    g.drawImage(arrowSprite, projectiles.get(i).x, projectiles.get(i).y, arrowSprite.getWidth()*spriteScale, arrowSprite.getHeight()*spriteScale, null);
+                    break;
+                case "Left":
+                    b = rotate(arrowSprite, 180);
+                    g.drawImage(b, projectiles.get(i).x, projectiles.get(i).y, b.getWidth()*spriteScale, b.getHeight()*spriteScale, null);
+                    break;
+                case "Down":
+                    b = rotate(arrowSprite, 90);
+                    g.drawImage(b, projectiles.get(i).x, projectiles.get(i).y, b.getWidth()*spriteScale, b.getHeight()*spriteScale, null);
+                    break;
+            }
         }
     }
 
@@ -243,6 +268,42 @@ public class graphics extends Canvas implements Runnable {
 
     private void drawPlayer(Graphics g) {
         g.drawImage(spriteimg, PLAYER.x, PLAYER.y, PLAYER.width, PLAYER.height,null);
+    }
+
+    private BufferedImage rotate(BufferedImage bi, int degree) {
+        int width = bi.getWidth();
+        int height = bi.getHeight();
+
+        BufferedImage biFlip;
+        if (degree == 90 || degree == 270)
+            biFlip = new BufferedImage(height, width, bi.getType());
+        else if (degree == 180)
+            biFlip = new BufferedImage(width, height, bi.getType());
+        else
+            return bi;
+
+        if (degree == 90) {
+            for (int i = 0; i < width; i++)
+                for (int j = 0; j < height; j++)
+                    biFlip.setRGB(height - j - 1, i, bi.getRGB(i, j));
+        }
+
+        if (degree == 180) {
+            for (int i = 0; i < width; i++)
+                for (int j = 0; j < height; j++)
+                    biFlip.setRGB(width - i - 1, height - j - 1, bi.getRGB(i, j));
+        }
+
+        if (degree == 270) {
+            for (int i = 0; i < width; i++)
+                for (int j = 0; j < height; j++)
+                    biFlip.setRGB(j, width - i - 1, bi.getRGB(i, j));
+        }
+
+        bi.flush();
+        bi = null;
+
+        return biFlip;
     }
 
     private class KL implements KeyListener {
@@ -266,16 +327,16 @@ public class graphics extends Canvas implements Runnable {
                 movingDown = true;
             }
             if(keyEvent.getKeyCode() == keyEvent.VK_LEFT && !isAttacking) {
-                playerAttack(-spriteSize, 0);
+                playerAttack(-spriteSize/2, 0);
             }
             if(keyEvent.getKeyCode() == keyEvent.VK_RIGHT && !isAttacking) {
-                playerAttack(spriteSize, 0);
+                playerAttack(spriteSize/2, 0);
             }
             if(keyEvent.getKeyCode() == keyEvent.VK_UP && !isAttacking) {
-                playerAttack(0, -spriteSize);
+                playerAttack(0, -spriteSize/2);
             }
             if(keyEvent.getKeyCode() == keyEvent.VK_DOWN && !isAttacking) {
-                playerAttack(0, spriteSize);
+                playerAttack(0, spriteSize/2);
             }
         }
 
@@ -310,16 +371,16 @@ public class graphics extends Canvas implements Runnable {
     private void playerAttack(int xOffset, int yOffset) {
         isAttacking = true;
         if(xOffset < 0) {
-            projectiles.add(new projectile(PLAYER.x + xOffset, PLAYER.y + yOffset, "Left"));
+            projectiles.add(new projectile(PLAYER.x + xOffset, PLAYER.y + yOffset + spriteSize/2, "Left"));
         }
         else if (xOffset > 0) {
-            projectiles.add(new projectile(PLAYER.x + xOffset, PLAYER.y + yOffset, "Right"));
+            projectiles.add(new projectile(PLAYER.x + xOffset, PLAYER.y + yOffset + spriteSize/2, "Right"));
         }
         if(yOffset < 0) {
-            projectiles.add(new projectile(PLAYER.x + xOffset, PLAYER.y + yOffset, "Up"));
+            projectiles.add(new projectile(PLAYER.x + xOffset + spriteSize/2, PLAYER.y + yOffset, "Up"));
         }
         else if (yOffset > 0) {
-            projectiles.add(new projectile(PLAYER.x + xOffset, PLAYER.y + yOffset, "Down"));
+            projectiles.add(new projectile(PLAYER.x + xOffset + spriteSize/2, PLAYER.y + yOffset, "Down"));
         }
     }
 }
