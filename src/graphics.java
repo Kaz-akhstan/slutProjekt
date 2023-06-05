@@ -44,8 +44,10 @@ public class graphics extends Canvas implements Runnable {
     int spriteSize = 16;
     int spriteScale = 2;
 
+    int score = 0;
+
     int spawnTimer = 0;
-    int spawnCooldown = 100;
+    int spawnCooldown = 5;
 
     private BufferedImage spriteimg;
     private BufferedImage wall;
@@ -151,6 +153,15 @@ public class graphics extends Canvas implements Runnable {
         bs.show();
     }
 
+    private skeleton isCollidingWithSkeleton (Rectangle actor, int xOffset, int yOffset) {
+        for (skeleton skeleton : skeletons) {
+            if (new Rectangle(actor.x + xOffset, actor.y + yOffset, actor.width, actor.height).intersects(new Rectangle(skeleton.x, skeleton.y, skeletonSprite.getWidth()*spriteScale, skeletonSprite.getHeight()*spriteScale))) {
+                return skeleton;
+            }
+        }
+        return null;
+    }
+
     private boolean isCollidingWithWall (Rectangle actor, int xOffset, int yOffset) {
         for (Rectangle wall : walls) {
             if (new Rectangle(actor.x + xOffset, actor.y + yOffset, actor.width, actor.height).intersects(wall)) {
@@ -179,18 +190,57 @@ public class graphics extends Canvas implements Runnable {
                     projectiles.get(i).y += projectiles.get(i).speed;
                     break;
             }
-            if(isCollidingWithWall(new Rectangle(projectiles.get(i).x, projectiles.get(i).y, arrowSprite.getWidth(), arrowSprite.getHeight()), 0, 0)) {
+            Rectangle arrow = new Rectangle(projectiles.get(i).x, projectiles.get(i).y, arrowSprite.getWidth(), arrowSprite.getWidth());
+            if(isCollidingWithWall(arrow, 0, 0)) {
                 projectiles.remove(i);
+            }
+            skeleton s = isCollidingWithSkeleton(arrow, 0, 0);
+            if(s != null) {
+                skeletons.remove(s);
+                score++;
+                try {
+                    projectiles.remove(i);
+                }
+                catch (IndexOutOfBoundsException e) {
+                    System.out.println("Arrow already destroyed");
+                }
             }
         }
     }
 
     private void spawnEnemy() {
         Random rn = new Random();
+        boolean spawned = false;
         int x = rn.nextInt(width*spriteSize);
         int y = rn.nextInt(height*spriteSize);
-        if(!isCollidingWithWall(new Rectangle(x, y, spriteSize, spriteSize), 0, 0)) {
+
+        Rectangle s = new Rectangle(x, y, spriteSize, spriteSize);
+        if(!isCollidingWithWall(s, 0, 0) && !s.intersects(PLAYER.x-spriteSize, PLAYER.y-spriteSize, spriteSize*3, spriteSize*3)) {
             skeletons.add(new skeleton(x, y, 4, 1));
+        }
+        else {
+            spawnTimer = spawnCooldown;
+        }
+    }
+
+    private void updateSkeletons() {
+        for(skeleton skeleton : skeletons) {
+            Rectangle s = new Rectangle(skeleton.x, skeleton.y, skeletonSprite.getWidth() * spriteScale, skeletonSprite.getHeight() * spriteScale);
+            if(skeleton.x > PLAYER.x && !isCollidingWithWall(s, -3, 0)) {
+                skeleton.x -= skeleton.speed;
+            }
+            if(skeleton.x < PLAYER.x && !isCollidingWithWall(s, 3, 0)) {
+                skeleton.x += skeleton.speed;
+            }
+            if(skeleton.y > PLAYER.y && !isCollidingWithWall(s, 0, -3)) {
+                skeleton.y -= skeleton.speed;
+            }
+            if(skeleton.y < PLAYER.y && !isCollidingWithWall(s, 0, 3)) {
+                skeleton.y += skeleton.speed;
+            }
+            if(s.intersects(PLAYER)) {
+                System.out.println(score);
+            }
         }
     }
 
@@ -200,6 +250,7 @@ public class graphics extends Canvas implements Runnable {
             spawnEnemy();
             spawnTimer = 0;
         }
+        updateSkeletons();
         updateProjectiles();
         if(movingLeft && !isCollidingWithWall(PLAYER, -p.speed, 0)) {
             PLAYER.x-= p.speed;
