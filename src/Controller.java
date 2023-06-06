@@ -23,9 +23,13 @@ public class Controller extends Canvas {
     }
 
     public void startGame() {
-        System.out.println(new databaseConnector().getDatabaseContent());
         EventQueue.invokeLater(() -> v.setVisible(true));
         v.start();
+    }
+
+    public String gameOver(String player, int score) {
+        new databaseConnector().insertNewScore(player, score);
+        return new databaseConnector().getDatabaseContent();
     }
 
     public static void main(String[] args) {

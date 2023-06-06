@@ -152,7 +152,9 @@ public class gameModel extends Canvas {
                 skeleton.y += skeleton.speed;
             }
             if(s.intersects(PLAYER)) {
-                System.out.println(score);
+                String P = JOptionPane.showInputDialog("Enter Name");
+                JOptionPane.showMessageDialog(null, c.gameOver(P, score));
+                System.exit(0);
             }
         }
     }
@@ -187,16 +189,22 @@ public class gameModel extends Canvas {
      * @param g grafiken
      */
     public void draw(Graphics g) {
-        drawPlayer(g);
-        drawSkeletons(g);
-        drawProjectiles(g);
         drawWalls(g);
+        drawProjectiles(g);
+        drawSkeletons(g);
+        drawPlayer(g);
+        drawScore(g);
+    }
+
+    public void drawScore(Graphics g) {
+        g.setColor(Color.white);
+        g.setFont(new Font("Dialog", Font.BOLD, 20));
+        g.drawString(String.valueOf(score), spriteSize/2, spriteSize);
     }
 
     public void drawSkeletons(Graphics g) {
         for (int i = 0; i < skeletons.size(); i++) {
             g.setColor(Color.cyan);
-            g.drawRect(skeletons.get(i).x, skeletons.get(i).y, spriteSize, spriteSize);
             g.drawImage(skeletonSprite, skeletons.get(i).x, skeletons.get(i).y, skeletonSprite.getWidth()*spriteScale, skeletonSprite.getHeight()*spriteScale, null);
         }
     }
