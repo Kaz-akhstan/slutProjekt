@@ -19,7 +19,7 @@ public class databaseConnector {
 
     public String getDatabaseContent() {
         String result = "";
-        String SQLQuery = "SELECT * FROM rj28highscores";
+        String SQLQuery = "SELECT * FROM rj28highscores ORDER BY score DESC LIMIT 10";
         try {
             ResultSet resultSet = statement.executeQuery(SQLQuery);
             while (resultSet.next()) {
