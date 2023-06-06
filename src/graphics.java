@@ -1,5 +1,3 @@
-import org.w3c.dom.css.Rect;
-
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -31,8 +29,8 @@ public class graphics extends Canvas implements Runnable {
     // Skapa en buffrad grafik så att vi kan rita bilder i förväg, bättre än dbg från tidigare
     private BufferStrategy bs;
     // Storleken på bilden
-    private int height = 20;
-    private int width = 30;
+    private final int height = 20;
+    private final int width = 30;
     // Variabler gör det lättare att placera saker
 
     boolean movingLeft, movingRight, movingUp, movingDown;
@@ -55,8 +53,6 @@ public class graphics extends Canvas implements Runnable {
     private BufferedImage skeletonSprite;
     private BufferedImage arrowSprite;
 
-    int[][] map;
-
     ArrayList<Rectangle>walls = new ArrayList<>();
     ArrayList<projectile>projectiles = new ArrayList<>();
     ArrayList<skeleton>skeletons = new ArrayList<>();
@@ -69,7 +65,7 @@ public class graphics extends Canvas implements Runnable {
         try {
             spriteimg = ImageIO.read(getClass().getResource("player.png"));
             wall = ImageIO.read(getClass().getResource("wall_mid.png"));
-            mapImage = ImageIO.read(getClass().getResource("test_map.png"));
+            mapImage = ImageIO.read(getClass().getResource("map1.png"));
             skeletonSprite = ImageIO.read(getClass().getResource("skeleton.png"));
             arrowSprite = ImageIO.read(getClass().getResource("arrow.png"));
         } catch (IOException e) {
@@ -82,7 +78,6 @@ public class graphics extends Canvas implements Runnable {
                 }
             }
         }
-        map = new int[width][height];
         p = new player(32, 32, 5, 1);
         PLAYER = new Rectangle(p.x, p.y, spriteimg.getWidth()*spriteScale, spriteimg.getHeight()*spriteScale);
 
@@ -378,13 +373,13 @@ public class graphics extends Canvas implements Runnable {
                 movingDown = true;
             }
             if(keyEvent.getKeyCode() == keyEvent.VK_LEFT && !isAttacking) {
-                playerAttack(-spriteSize/2, 0);
+                playerAttack(-spriteSize/4, 0);
             }
             if(keyEvent.getKeyCode() == keyEvent.VK_RIGHT && !isAttacking) {
                 playerAttack(spriteSize/2, 0);
             }
             if(keyEvent.getKeyCode() == keyEvent.VK_UP && !isAttacking) {
-                playerAttack(0, -spriteSize/2);
+                playerAttack(0, -spriteSize/4);
             }
             if(keyEvent.getKeyCode() == keyEvent.VK_DOWN && !isAttacking) {
                 playerAttack(0, spriteSize/2);
