@@ -5,7 +5,7 @@ import java.awt.image.BufferStrategy;
 
 public class graphics extends Canvas implements Runnable {
     private Thread thread;
-    int fps = 30;
+    int fps = 40;
     private boolean isRunning;
     private BufferStrategy bs;
     private Controller c;

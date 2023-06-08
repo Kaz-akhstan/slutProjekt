@@ -24,11 +24,17 @@ public class gameModel extends Canvas {
     int spriteScale = 2;
 
     int score = 0;
-    int currency = 0;
+    long currency = 0;
     int addCurrency = 10;
 
     int spawnTimer = 0;
     int spawnCooldown = 20;
+
+    int phaseTimer = 0;
+    int phaseCooldown = 100;
+
+    boolean phasing = false;
+
 
     private BufferedImage spriteimg;
     private BufferedImage wall;
@@ -84,6 +90,9 @@ public class gameModel extends Canvas {
     }
 
     public boolean isCollidingWithWall (Rectangle actor, int xOffset, int yOffset) {
+        if(actor != PLAYER && phasing) {
+            return false;
+        }
         for (Rectangle wall : walls) {
             if (new Rectangle(actor.x + xOffset, actor.y + yOffset, actor.width, actor.height).intersects(wall)) {
                 return true;
@@ -132,6 +141,10 @@ public class gameModel extends Canvas {
                     case 100:
                         spawnCooldown = spawnCooldown-5;
                         break;
+                    case 150:
+                        phaseCooldown -= 25;
+                    case 200:
+                        phaseCooldown -= 25;
                 }
 
                 currency += addCurrency;
@@ -193,6 +206,11 @@ public class gameModel extends Canvas {
         if(p.getAttackTimer() >= p.getCooldown()) {
             isAttacking = false;
             p.setAttackTimer(0);
+        }
+        phaseTimer++;
+        if(phaseTimer >= phaseCooldown) {
+            phasing = !phasing;
+            phaseTimer = 0;
         }
     }
 
