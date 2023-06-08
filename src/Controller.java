@@ -86,17 +86,14 @@ public class Controller extends Canvas {
             if(keyEvent.getKeyChar() == 's') {
                 m.setMovingDown(false);
             }
-            if(keyEvent.getKeyCode() == keyEvent.VK_LEFT) {
-                m.isAttacking = false;
+            if(keyEvent.getKeyChar() == '1') {
+                m.upgrade(1);
             }
-            if(keyEvent.getKeyCode() == keyEvent.VK_RIGHT) {
-                m.isAttacking = false;
+            if(keyEvent.getKeyChar() == '2') {
+                m.upgrade(2);
             }
-            if(keyEvent.getKeyCode() == keyEvent.VK_UP) {
-                m.isAttacking = false;
-            }
-            if(keyEvent.getKeyCode() == keyEvent.VK_DOWN) {
-                m.isAttacking = false;
+            if(keyEvent.getKeyChar() == '3') {
+                m.upgrade(3);
             }
         }
     }

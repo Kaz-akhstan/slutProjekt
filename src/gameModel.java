@@ -18,20 +18,24 @@ public class gameModel extends Canvas {
 
     private final int height = 20;
     private final int width = 30;
+    int uiHeight = 100;
 
     int spriteSize = 16;
     int spriteScale = 2;
 
     int score = 0;
+    int currency = 0;
+    int addCurrency = 10;
 
     int spawnTimer = 0;
-    int spawnCooldown = 5;
+    int spawnCooldown = 20;
 
     private BufferedImage spriteimg;
     private BufferedImage wall;
     private BufferedImage mapImage;
     private BufferedImage skeletonSprite;
     private BufferedImage arrowSprite;
+    private BufferedImage groundSprite;
 
     private Controller c;
 
@@ -39,8 +43,11 @@ public class gameModel extends Canvas {
     ArrayList<projectile>projectiles = new ArrayList<>();
     ArrayList<skeleton>skeletons = new ArrayList<>();
 
+    int[] upgradeCost = {200, 200, 200};
+    String[] upgradeNames = {"Fire Rate", "Speed", "Looting"};
+
     public Vector2 getResolution() {
-        return new Vector2(width*spriteSize, height*spriteSize);
+        return new Vector2(width*spriteSize, height*spriteSize + uiHeight);
     }
 
     public gameModel(Controller c) {
@@ -52,6 +59,7 @@ public class gameModel extends Canvas {
             mapImage = ImageIO.read(getClass().getResource("map1.png"));
             skeletonSprite = ImageIO.read(getClass().getResource("skeleton.png"));
             arrowSprite = ImageIO.read(getClass().getResource("arrow.png"));
+            groundSprite = ImageIO.read(getClass().getResource("floor.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -111,6 +119,22 @@ public class gameModel extends Canvas {
             if(s != null) {
                 skeletons.remove(s);
                 score++;
+                switch (score) {
+                    case 20:
+                        spawnCooldown = spawnCooldown-2;
+                        break;
+                    case 50:
+                        spawnCooldown = spawnCooldown-3;
+                        break;
+                    case 70:
+                        spawnCooldown = spawnCooldown-5;
+                        break;
+                    case 100:
+                        spawnCooldown = spawnCooldown-5;
+                        break;
+                }
+
+                currency += addCurrency;
                 try {
                     projectiles.remove(i);
                 }
@@ -159,14 +183,20 @@ public class gameModel extends Canvas {
         }
     }
 
-    public void update() {
+    private void updateTimers() {
         spawnTimer++;
         if(spawnTimer >= spawnCooldown) {
             spawnEnemy();
             spawnTimer = 0;
         }
-        updateSkeletons();
-        updateProjectiles();
+        p.setAttackTimer(p.getAttackTimer()+1);
+        if(p.getAttackTimer() >= p.getCooldown()) {
+            isAttacking = false;
+            p.setAttackTimer(0);
+        }
+    }
+
+    private void updatePlayerPosition() {
         if(movingLeft && !isCollidingWithWall(PLAYER, -p.speed, 0)) {
             PLAYER.x-= p.speed;
         }
@@ -183,23 +213,51 @@ public class gameModel extends Canvas {
         p.y = PLAYER.y;
     }
 
+    public void update() {
+        updateTimers();
+        updateSkeletons();
+        updateProjectiles();
+        updatePlayerPosition();
+    }
+
     /**
      * Rita ut alla saker. Ordningen är viktig eftersom vi kan rita saker på andra saker.
      *
      * @param g grafiken
      */
     public void draw(Graphics g) {
+        drawGround(g);
         drawWalls(g);
         drawProjectiles(g);
         drawSkeletons(g);
         drawPlayer(g);
         drawScore(g);
+        drawGUI(g);
+    }
+
+    private void drawGUI(Graphics g) {
+        for (int i = 0; i < upgradeCost.length; i++) {
+            g.setColor(new Color(50+((i+1)*10), 50+((i+1)*10) ,50+((i+1)*10)));
+            g.fillRect((width*spriteSize)/upgradeCost.length*i, height*spriteSize, width*spriteSize/ upgradeCost.length, uiHeight);
+            g.setColor(Color.white);
+            g.setFont(new Font("Dialog", Font.BOLD, 20));
+            g.drawString("[" + (i+1) + "] - " + upgradeNames[i] + " - Cost: " + upgradeCost[i], (width*spriteSize)/upgradeCost.length*i + (width*spriteSize/ upgradeCost.length) / 8, height*spriteSize + uiHeight/2);
+        }
+    }
+
+    private void drawGround(Graphics g) {
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                g.drawImage(groundSprite,j*spriteSize, i*spriteSize, groundSprite.getWidth()*spriteScale, groundSprite.getHeight()*spriteScale, null);
+            }
+        }
     }
 
     public void drawScore(Graphics g) {
         g.setColor(Color.white);
         g.setFont(new Font("Dialog", Font.BOLD, 20));
-        g.drawString(String.valueOf(score), spriteSize/2, spriteSize);
+        g.drawString("Score: " + score, spriteSize/2, spriteSize);
+        g.drawString("Coins: " + currency, spriteSize*4, spriteSize);
     }
 
     public void drawSkeletons(Graphics g) {
@@ -291,6 +349,32 @@ public class gameModel extends Canvas {
         }
         else if (yOffset > 0) {
             projectiles.add(new projectile(PLAYER.x + xOffset + spriteSize/2, PLAYER.y + yOffset, "Down"));
+        }
+    }
+
+    public void upgrade(int index) {
+        switch (index) {
+            case 1:
+                if(currency >= upgradeCost[index-1] && p.getCooldown() >= 5) {
+                    currency -= upgradeCost[index-1];
+                    upgradeCost[index-1] = (int) (upgradeCost[index-1] * 1.3);
+                    p.setCooldown(p.getCooldown()-2);
+                }
+                break;
+            case 2:
+                if(currency >= upgradeCost[index-1]) {
+                    currency -= upgradeCost[index-1];
+                    upgradeCost[index-1] = (int) (upgradeCost[index-1] * 1.3);
+                    p.setSpeed(p.getSpeed()+2);
+                }
+                break;
+            case 3:
+                if(currency >= upgradeCost[index-1]) {
+                    currency -= upgradeCost[index-1];
+                    upgradeCost[index-1] = (int) (upgradeCost[index-1] * 1.3);
+                    addCurrency = (int) (addCurrency * 1.5);
+                }
+                break;
         }
     }
 

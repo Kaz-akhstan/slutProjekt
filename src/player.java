@@ -3,7 +3,34 @@ public class player {
     int y;
     int hp;
     int dmg;
+
     int speed = 5;
+    int cooldown = 25;
+    int attackTimer = 0;
+
+    public int getSpeed() {
+        return speed;
+    }
+
+    public void setSpeed(int speed) {
+        this.speed = speed;
+    }
+
+    public int getCooldown() {
+        return cooldown;
+    }
+
+    public void setCooldown(int cooldown) {
+        this.cooldown = cooldown;
+    }
+
+    public int getAttackTimer() {
+        return attackTimer;
+    }
+
+    public void setAttackTimer(int attackTimer) {
+        this.attackTimer = attackTimer;
+    }
 
     public int getHp() {
         return hp;
